@@ -1,4 +1,4 @@
-name: Compile, test, deploy
+name: Compile. test, deploy
 on: [push]
 env:
   GIPHY_API_KEY: ${{ secrets.giphy_api_key }}
@@ -6,20 +6,40 @@ jobs:
   step1:
     runs-on: ubuntu-latest
     steps:
-		- name: Checkout
-			uses: actions/checkout@v3
-		- name: Setup Java JDK
-			uses: actions/setup-java@v2
-			with:
-				distribution: 'temurin'
-				java-version: '17'
-		- name: Set up Maven
-			uses: stCarolas/setup-maven@v4.3
-			with:
-				maven-version: '3.8.4'
-		- name: Run test
-			run: mvn clean verify
-		- name: Generate JaCoCo Badge
-			uses: cicirello/jacoco-badge-generator@v2
-				with:
-					generate-branches-badge: true
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Setup Java JDK
+      uses: actions/setup-java@v2
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+    - name: Set up Maven
+      uses: stCarolas/setup-maven@v4.3
+      with:
+        maven-version: '3.8.4'
+    - name: Run test
+      run: mvn clean verify
+    - name: Generate JaCoCo Badge
+      uses: cicirello/jacoco-badge-generator@v2
+      with:
+        generate-branches-badge: true
+    - name: Upload JaCoCo Badge to DigitalOcean spaces
+      uses: BetaHuhn/do-spaces-action@v2
+      with:
+        access_key: ${{ secrets.access_key }}
+        secret_key: ${{ secrets.secret_key }}
+        space_name: zspace97
+        space_region: sgp1
+        source: .github/badges/jacoco.svg
+        out_dir: coverage/${{ github.event.repository.name }}
+        permission: public-read
+    - name: Upload coverage report to DigitalOcean spaces
+      uses: BetaHuhn/do-spaces-action@v2
+      with:
+        access_key: ${{ secrets.access_key }}
+        secret_key: ${{ secrets.secret_key }}
+        space_name: zspace97
+        space_region: sgp1
+        source: target/site/jacoco
+        out_dir: coverage/${{ github.event.repository.name }}
+        permission: public-read
